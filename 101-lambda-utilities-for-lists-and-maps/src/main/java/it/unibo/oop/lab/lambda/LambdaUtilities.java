@@ -86,7 +86,11 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Map.merge
          */
-        return null;
+        Map<R, Set<T>> newMap = new HashMap<>();
+        for (R elem : list) {
+            
+        }
+        return newMap;
     }
 
     /**
