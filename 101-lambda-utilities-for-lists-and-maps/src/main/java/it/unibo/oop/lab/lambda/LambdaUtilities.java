@@ -13,6 +13,8 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.swing.text.html.Option;
+
 /**
  * This class will contain four utility functions on lists and maps, of which the first one is provided as example.
  * 
@@ -61,7 +63,15 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Optional.filter
          */
-        return null;
+        List<Optional<T>> l = new ArrayList<Optional<T>>();
+        for (T elem : list) {
+            if (pre.test(elem)) {
+                l.add(Optional.ofNullable(elem));
+            } else {
+                l.add(Optional.empty());
+            }
+        }
+        return l;
     }
 
     /**
