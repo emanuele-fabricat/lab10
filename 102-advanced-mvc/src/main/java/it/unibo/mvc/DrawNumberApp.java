@@ -1,15 +1,18 @@
 package it.unibo.mvc;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.lang.module.ModuleDescriptor.Builder;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
+import java.io.IOException;
 
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
-    private static final int MIN = 0;
-    private static final int MAX = 100;
-    private static final int ATTEMPTS = 10;
 
     private final DrawNumber model;
     private final List<DrawNumberView> views;
@@ -18,7 +21,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @param views
      *            the views to attach
      */
-    public DrawNumberApp(final DrawNumberView... views) {
+    public DrawNumberApp(final String configurator, final DrawNumberView... views) {
         /*
          * Side-effect proof
          */
@@ -27,8 +30,33 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+        final Configuration.Builder builder = new Configuration.Builder();
+        try (BufferedReader stream = new BufferedReader(new InputStreamReader(ClassLoader.getSystemResourceAsStream(configurator)))) {
+            String line;
+            while ((line = stream.readLine()) != null) {
+                String [] temp = line.split(":");
+                if (temp[0].contains("max")) {
+                    builder.setMax(Integer.parseInt(temp[1].trim()));
+                } else if (temp[0].contains("min")) {
+                    builder.setMin(Integer.parseInt(temp[1].trim()));
+                } else if (temp[0].contains("attempts")) {
+                    builder.setAttempts(Integer.parseInt(temp[1].trim()));
+                }  else {
+                    throw new IllegalArgumentException("The file have unexpected string");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());;
+        }
+        final Configuration configuration = builder.build();
+        if (configuration.isConsistent()) {
+            this.model = new DrawNumberImpl(configuration);
+        } else {
+
+            this.model = new DrawNumberImpl(new Configuration.Builder().build());
+        }
     }
+    
 
     @Override
     public void newAttempt(final int n) {
@@ -66,7 +94,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @throws FileNotFoundException 
      */
     public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp(new DrawNumberViewImpl());
+        new DrawNumberApp("config.yml", new DrawNumberViewImpl(), new PrintStreamView(System.out));
     }
 
 }
